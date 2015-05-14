@@ -2,9 +2,9 @@ package com.ehanlin.argsParser
 
 class ArgsParser(args : Array[String]){
 
-  val defaultOptionFlag = "~~defaultOption"
-  val FlagRegex = "^~(.+)$".r
-  val OptionRegex = "^~~(.+)$".r
+  val defaultOptionFlag = "**defaultOption"
+  val FlagRegex = "^\\*(.+)$".r
+  val OptionRegex = "^\\*\\*(.+)$".r
   val optionTuples = optionsToTuple(args.toList)
 
   private var defaultOption : Option[String] = None
@@ -16,7 +16,7 @@ class ArgsParser(args : Array[String]){
   }
 
   def optionsToTuple(args : List[String]) : List[(String, Option[String])] = args match {
-    case "~help" :: other => ("~help", None) :: optionsToTuple(other)
+    case "*help" :: other => ("*help", None) :: optionsToTuple(other)
     case OptionRegex(option) :: value :: other => (option, Some(value)) :: optionsToTuple(other)
     case FlagRegex(flags) :: other => flagsToTuple(flags.toList) ::: optionsToTuple(other)
     case value :: Nil => (defaultOptionFlag, Some(value)) :: Nil
@@ -30,18 +30,27 @@ class ArgsParser(args : Array[String]){
   private var optionInfoList = List[OptionInfo]()
 
   private def addOption(option : String, description : String, defaultValue : String) : String = {
-    optionInfoList ::= OptionInfo(s"~~$option", Some(defaultValue), description)
+    optionInfoList ::= OptionInfo(s"**$option", Some(defaultValue), description)
     findOptionTuple(option) match {
       case Some((key, Some(value))) => value
-      case Some((key, None)) => throw new IllegalArgumentException(s"~~$option lose value")
+      case Some((key, None)) => throw new IllegalArgumentException(s"**$option lose value")
       case None => defaultValue
     }
   }
 
-  def ~~ (option : String, description : String, defaultValue : String) : String = addOption(option, description, defaultValue)
+  case class AddOptionChain(option : String, description : String, defaultValue : String, endFn : (String, String, String) => String) {
+    def desc(value : String) = AddOptionChain(option, value, defaultValue, endFn)
+    def default(value : String) = endFn.apply(option, description, value)
+  }
 
-  def ~~! (option : String, description : String, defaultValue : String) : String = {
-    defaultOption = Some(s"~~$option")
+  def ** (option : String) : AddOptionChain = AddOptionChain(option, null, null, **)
+
+  def ** (option : String, description : String, defaultValue : String) : String = addOption(option, description, defaultValue)
+
+  def **! (option : String) : AddOptionChain = AddOptionChain(option, null, null, **!)
+
+  def **! (option : String, description : String, defaultValue : String) : String = {
+    defaultOption = Some(s"**$option")
     val result = addOption(option, description, defaultValue)
     this.!()
     findOptionTuple(defaultOptionFlag) match {
@@ -51,24 +60,33 @@ class ArgsParser(args : Array[String]){
     }
   }
 
+
   private def addFlag(option : String, description : String) : Boolean = {
-    optionInfoList ::= OptionInfo(s"~$option", None, description)
+    optionInfoList ::= OptionInfo(s"*$option", None, description)
     findOptionTuple(option) match {
       case Some(_) => true
       case None => false
     }
   }
 
-  def ~ (option : String, description : String) : Boolean = addFlag(option, description)
+  case class AddFlagChain(option : String, description : String, endFn : (String, String) => Boolean) {
+    def desc(value : String) = endFn.apply(option, value)
+  }
 
-  def ~! (option : String, description : String) : Boolean = {
+  def * (option : String) : AddFlagChain = AddFlagChain(option, null, addFlag)
+
+  def * (option : String, description : String) : Boolean = addFlag(option, description)
+
+  def *! (option : String) : AddFlagChain = AddFlagChain(option, null, *!)
+
+  def *! (option : String, description : String) : Boolean = {
     val result = addFlag(option, description)
     this.!()
     result
   }
 
   private def end() : Unit = {
-    if(optionTuples.contains(("~help", None))){
+    if(optionTuples.contains(("*help", None))){
       defaultOption match {
         case Some(defaultOption) => println(s"Default Option is $defaultOption")
         case None =>
@@ -80,10 +98,17 @@ class ArgsParser(args : Array[String]){
         case OptionInfo(option, None, description) =>
           println(f"${option}%-20s  ${"flag"}%-30s  ${description}%s")
       }
-      println(f"${"~help"}%-20s  ${"flag"}%-30s  HELP!")
+      println(f"${"*help"}%-20s  ${"flag"}%-30s  HELP!")
     }
   }
 
   def ! () : Unit = end()
 
+}
+
+object ArgsParserMethods{
+  def *(option : String)(implicit ap : ArgsParser) = ap.*(option)
+  def *!(option : String)(implicit ap : ArgsParser) = ap.*!(option)
+  def **(option : String)(implicit ap : ArgsParser) = ap.**(option)
+  def **!(option : String)(implicit ap : ArgsParser) = ap.**!(option)
 }
