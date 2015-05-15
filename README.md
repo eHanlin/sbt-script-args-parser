@@ -8,9 +8,12 @@ script.scala
 
 /***
   scalaVersion := "2.11.6"
+  
+  resolvers += Resolver.sonatypeRepo("snapshots")
+
   libraryDependencies ++= Seq(
     "org.mongodb" %% "casbah" % "2.8.1",
-    "com.ehanlin" %% "sbt-sbt-script-args-parser" % "0.0.1-SNAPSHOT"
+    "tw.com.ehanlin" %% "sbt-script-args-parser" % "0.0.1-SNAPSHOT"
   )
 */
 
