@@ -99,6 +99,7 @@ class ArgsParser(args : Array[String]){
           println(f"${option}%-20s  ${"flag"}%-30s  ${description}%s")
       }
       println(f"${"*help"}%-20s  ${"flag"}%-30s  HELP!")
+      System.exit(0);
     }
   }
 
