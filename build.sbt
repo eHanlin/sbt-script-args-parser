@@ -1,6 +1,8 @@
 name := "sbt-script-args-parser"
 
-version := "0.0.1-SNAPSHOT"
+version := "0.0.1"
+
+isSnapshot := false
 
 scalaVersion := "2.11.6"
 

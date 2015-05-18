@@ -1,6 +1,64 @@
 # SBT Scala script args parser
 
-### 使用方式 Usage
+### 使用方式 (Usage)
+
+加入依賴 (Append dependency)
+```scala
+/***
+  scalaVersion := "2.11.6"
+
+  Resolver.sonatypeRepo("releases")
+  
+  libraryDependencies += "tw.com.ehanlin" %% "sbt-script-args-parser" % "0.0.1"
+*/
+
+import com.ehanlin.argsParser.ArgsParser
+import com.ehanlin.argsParser.ArgsParserMethods._
+```
+
+定義傳入參數 (Define the parameters)
+```scala
+//定義開關型的參數 (Define Boolean type parameter)
+val flag : Boolean = *("f") desc "flag description"
+
+//定義傳入值型的參數，必須要有預設值 (Define String type parameter, must have a default value)
+val option : String = **("option") desc "option description" default "default value"
+
+//若所有參數都是開關型的參數，在定義最後一個參數時使用 *!
+//(If all parameters are Boolean type, when defining the last parameter use *!)
+val lastFlag : Boolean = *!("l") desc "last flag description"
+
+//若有傳入值型參數，則將想當成預設參數的值入值型參數放在最後一個使用 **! 定義
+//(Defining the last String type parameter use *!, become default parameter)
+val lastOption : String = **("lastOption") desc "last option description" default "default value"
+```
+
+開關型的參數，開啟 f (Setting Boolean type parameter f is true)
+```shell
+script.scala *f
+```
+
+開關型的參數，開啟 a,b,c (Setting Boolean type parameters a, b, c are true)
+```shell
+script.scala *abc
+```
+
+傳入值型的參數，option 值設為 optionValue (Setting String type parameter option is optionValue)
+```
+script.scala *option optionValue
+```
+
+傳入值型的參數，lastOption 值設為 lastOptionValue (Setting String type parameter lastOption is lastOptionValue)
+```
+script.scala lastOptionValue
+```
+
+幫助參數，於執行完印出幫助選項後，會強制結束程式 (Help task, after print help, forced end process)
+```shell
+script.scala *help
+```
+
+### 例子 (Example)
 
 script.scala
 ```scala
@@ -13,7 +71,7 @@ script.scala
 
   libraryDependencies ++= Seq(
     "org.mongodb" %% "casbah" % "2.8.1",
-    "tw.com.ehanlin" %% "sbt-script-args-parser" % "0.0.1-SNAPSHOT"
+    "tw.com.ehanlin" %% "sbt-script-args-parser" % "0.0.1"
   )
 */
 
